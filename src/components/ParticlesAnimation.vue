@@ -7,219 +7,306 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import * as THREE from 'three'
 
 const container = ref(null)
-let scene, camera, renderer
+let scene, camera, renderer, particles, mouse, raycaster
 let particleSystem, particleGeometry, particleMaterial
 let animationId
 
-const mouse = { x: 0, y: 0 }
+const mouse3D = new THREE.Vector2()
+const originalColors = []
 const originalPositions = []
-let mouseWorldPos = new THREE.Vector3()
-
-// Coordonnées simplifiées de la carte du Bénin
-const beninMapPoints = [
-  // Frontière ouest (avec le Togo)
-  { x: -1, y: 1 }, { x: -1, y: 0.8 }, { x: -0.9, y: 0.6 }, { x: -0.8, y: 0.4 },
-  { x: -0.7, y: 0.2 }, { x: -0.6, y: 0 }, { x: -0.5, y: -0.2 }, { x: -0.4, y: -0.4 },
-  { x: -0.3, y: -0.6 }, { x: -0.2, y: -0.8 }, { x: -0.1, y: -1 },
-  
-  // Côte atlantique (sud)
-  { x: -0.1, y: -1 }, { x: 0.1, y: -1 }, { x: 0.3, y: -0.95 }, { x: 0.5, y: -0.9 },
-  { x: 0.7, y: -0.85 }, { x: 0.9, y: -0.8 },
-  
-  // Frontière est (avec le Nigeria)
-  { x: 0.9, y: -0.8 }, { x: 1, y: -0.6 }, { x: 1.1, y: -0.4 }, { x: 1.2, y: -0.2 },
-  { x: 1.1, y: 0 }, { x: 1, y: 0.2 }, { x: 0.9, y: 0.4 }, { x: 0.8, y: 0.6 },
-  
-  // Frontière nord (avec le Niger et le Burkina Faso)
-  { x: 0.8, y: 0.8 }, { x: 0.6, y: 1 }, { x: 0.4, y: 1.1 }, { x: 0.2, y: 1.2 },
-  { x: 0, y: 1.1 }, { x: -0.2, y: 1.05 }, { x: -0.4, y: 1.02 }, { x: -0.6, y: 1.01 },
-  { x: -0.8, y: 1.005 }, { x: -1, y: 1 },
-  
-  // Points intérieurs pour density
-  { x: -0.5, y: 0.5 }, { x: -0.3, y: 0.3 }, { x: -0.1, y: 0.1 }, { x: 0.1, y: -0.1 },
-  { x: 0.3, y: -0.3 }, { x: 0.5, y: -0.5 }, { x: 0.7, y: -0.1 }, { x: 0.5, y: 0.3 },
-  { x: 0.3, y: 0.5 }, { x: 0.1, y: 0.7 }, { x: -0.1, y: 0.8 }, { x: -0.3, y: 0.6 },
-  { x: -0.5, y: 0.8 }, { x: -0.7, y: 0.9 }, { x: 0.6, y: 0.1 }, { x: 0.8, y: 0.3 },
-  
-  // Villes principales
-  { x: 0.2, y: -0.7 }, // Porto-Novo (capitale)
-  { x: 0.1, y: -0.6 }, // Cotonou (économique)
-  { x: -0.2, y: 0.8 }, // Parakou (centre)
-  { x: 0.5, y: 0.9 }, // Natitingou (nord-ouest)
-  { x: 0.8, y: 0.7 }, // Kandi (nord-est)
-]
+const mouseTrail = []
+const maxTrailLength = 10
 
 const initThreeJS = () => {
   if (!container.value) return
 
-  try {
-    // Scene setup
-    scene = new THREE.Scene()
-    
-    // Camera setup
-    camera = new THREE.PerspectiveCamera(
-      75, 
-      container.value.clientWidth / container.value.clientHeight, 
-      0.1, 
-      1000
-    )
-    camera.position.z = 300
+  // Scene setup
+  scene = new THREE.Scene()
+  
+  // Camera setup
+  camera = new THREE.PerspectiveCamera(
+    75, 
+    container.value.clientWidth / container.value.clientHeight, 
+    0.1, 
+    1000
+  )
+  camera.position.z = 500
 
-    // Renderer setup
-    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
-    renderer.setSize(container.value.clientWidth, container.value.clientHeight)
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-    renderer.setClearColor(0x000000, 0)
-    container.value.appendChild(renderer.domElement)
+  // Renderer setup
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
+  renderer.setSize(container.value.clientWidth, container.value.clientHeight)
+  renderer.setPixelRatio(window.devicePixelRatio)
+  renderer.setClearColor(0x000000, 0)
+  container.value.appendChild(renderer.domElement)
 
-    // Create particle system
-    createParticles()
-    
-    // Event listeners
-    container.value.addEventListener('mousemove', onMouseMove, false)
-    container.value.addEventListener('mouseleave', resetParticles, false)
-    window.addEventListener('resize', onWindowResize, false)
+  // Raycaster for mouse interaction
+  raycaster = new THREE.Raycaster()
+  mouse = new THREE.Vector2()
 
-    // Start animation loop
-    animate()
-    
-    console.log('Three.js initialized successfully')
-  } catch (error) {
-    console.error('Error initializing Three.js:', error)
-  }
+  // Create particle system
+  createParticles()
+  
+  // Event listeners
+  container.value.addEventListener('mousemove', onMouseMove, false)
+  container.value.addEventListener('mouseleave', () => {
+    // Reset all particles when mouse leaves
+    if (particleSystem && particleGeometry) {
+      const positions = particleGeometry.attributes.position.array
+      const colors = particleGeometry.attributes.color.array
+      
+      for (let i = 0; i < originalPositions.length; i++) {
+        const i3 = i * 3
+        positions[i3] = originalPositions[i].x
+        positions[i3 + 1] = originalPositions[i].y
+        positions[i3 + 2] = originalPositions[i].z
+        
+        colors[i3] = originalColors[i].r
+        colors[i3 + 1] = originalColors[i].g
+        colors[i3 + 2] = originalColors[i].b
+      }
+      
+      particleGeometry.attributes.position.needsUpdate = true
+      particleGeometry.attributes.color.needsUpdate = true
+    }
+    // Clear mouse trail
+    mouseTrail.length = 0
+  }, false)
+  window.addEventListener('resize', onWindowResize, false)
+
+  // Start animation loop
+  animate()
 }
 
 const createParticles = () => {
-  const particlesPerPoint = 15 // Particules par point de la carte
-  const totalParticles = beninMapPoints.length * particlesPerPoint
-  const positions = new Float32Array(totalParticles * 3)
-  const colors = new Float32Array(totalParticles * 3)
-  const sizes = new Float32Array(totalParticles)
+  const particleCount = 1500 // Reduced for better performance
+  const positions = new Float32Array(particleCount * 3)
+  const colors = new Float32Array(particleCount * 3)
+  const sizes = new Float32Array(particleCount)
 
-  let particleIndex = 0
+  const color = new THREE.Color()
 
-  // Créer des particules autour de chaque point de la carte du Bénin
-  beninMapPoints.forEach((mapPoint, pointIndex) => {
-    for (let i = 0; i < particlesPerPoint; i++) {
-      const i3 = particleIndex * 3
-      
-      // Position basée sur les coordonnées de la carte avec variation aléatoire
-      const scale = 200 // Taille de la carte
-      const scatter = 25 // Dispersion autour des points
-      
-      positions[i3] = mapPoint.x * scale + (Math.random() - 0.5) * scatter
-      positions[i3 + 1] = mapPoint.y * scale + (Math.random() - 0.5) * scatter
-      positions[i3 + 2] = (Math.random() - 0.5) * 20 // Profondeur légère
+  for (let i = 0; i < particleCount; i++) {
+    const i3 = i * 3
 
-      // Store original positions
-      originalPositions.push({
-        x: positions[i3],
-        y: positions[i3 + 1],
-        z: positions[i3 + 2]
-      })
+    // Position - create a more organic distribution
+    const radius = Math.random() * 500 + 50
+    const theta = Math.random() * Math.PI * 2
+    const phi = Math.random() * Math.PI
 
-      // Couleurs - dégradé selon la position (nord-sud)
-      const normalizedY = (mapPoint.y + 1.2) / 2.4 // Normaliser entre 0 et 1
-      const hue = 0.25 + normalizedY * 0.25 // Du vert au cyan du sud au nord
-      const saturation = 0.7 + Math.random() * 0.3
-      const lightness = 0.5 + Math.random() * 0.3
-      
-      const color = new THREE.Color().setHSL(hue, saturation, lightness)
-      colors[i3] = color.r
-      colors[i3 + 1] = color.g
-      colors[i3 + 2] = color.b
-      
-      // Tailles variées - plus grandes pour les frontières
-      const isBoader = pointIndex < 20 || pointIndex >= beninMapPoints.length - 8
-      sizes[particleIndex] = isBoader ? 6 + Math.random() * 4 : 3 + Math.random() * 3
-      
-      particleIndex++
-    }
-  })
+    positions[i3] = radius * Math.sin(phi) * Math.cos(theta)
+    positions[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta) 
+    positions[i3 + 2] = (radius * Math.cos(phi)) * 0.3 // Flatten Z for better interaction
+
+    // Store original positions
+    originalPositions.push({
+      x: positions[i3],
+      y: positions[i3 + 1],
+      z: positions[i3 + 2]
+    })
+
+    // Colors - gradient from green to blue with more variety
+    const mixRatio = Math.random()
+    color.setHSL(0.25 + mixRatio * 0.35, 0.7 + Math.random() * 0.3, 0.5 + Math.random() * 0.3)
+    colors[i3] = color.r
+    colors[i3 + 1] = color.g
+    colors[i3 + 2] = color.b
+
+    // Store original colors
+    originalColors.push({ r: color.r, g: color.g, b: color.b })
+
+    // Sizes with more variation
+    sizes[i] = Math.random() * 6 + 3
+  }
 
   particleGeometry = new THREE.BufferGeometry()
   particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
   particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))
   particleGeometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1))
 
-  // Matériau avec tailles variables
-  particleMaterial = new THREE.PointsMaterial({
-    size: 5,
-    vertexColors: true,
+  // Particle shader material for better performance and effects
+  particleMaterial = new THREE.ShaderMaterial({
+    uniforms: {
+      time: { value: 0.0 },
+      mousePos: { value: new THREE.Vector2(0, 0) },
+      mouseRadius: { value: 100.0 }
+    },
+    vertexShader: `
+      attribute float size;
+      attribute vec3 color;
+      varying vec3 vColor;
+      varying float vDistanceToMouse;
+      uniform float time;
+      uniform vec2 mousePos;
+      uniform float mouseRadius;
+      
+      void main() {
+        vColor = color;
+        
+        vec3 pos = position;
+        
+        // Wave animation
+        pos.z += sin(time * 0.002 + position.x * 0.01) * 20.0;
+        pos.y += cos(time * 0.001 + position.z * 0.01) * 15.0;
+        
+        vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+        
+        // Calculate distance to mouse for interaction
+        vec2 screenPos = (mvPosition.xy / mvPosition.w) * 0.5 + 0.5;
+        vDistanceToMouse = distance(screenPos, mousePos);
+        
+        gl_Position = projectionMatrix * mvPosition;
+        
+        // Size based on distance and mouse proximity
+        float mouseEffect = 1.0 + (1.0 - smoothstep(0.0, mouseRadius * 0.01, vDistanceToMouse)) * 2.0;
+        gl_PointSize = size * mouseEffect * (300.0 / -mvPosition.z);
+      }
+    `,
+    fragmentShader: `
+      varying vec3 vColor;
+      varying float vDistanceToMouse;
+      uniform vec2 mousePos;
+      uniform float mouseRadius;
+      
+      void main() {
+        // Create circular particles
+        vec2 center = gl_PointCoord - vec2(0.5);
+        float dist = length(center);
+        
+        if (dist > 0.5) discard;
+        
+        // Mouse interaction glow effect
+        float mouseGlow = 1.0 - smoothstep(0.0, mouseRadius * 0.01, vDistanceToMouse);
+        vec3 glowColor = vec3(1.0, 1.0, 1.0) * mouseGlow * 0.5;
+        
+        // Smooth circular shape with glow
+        float alpha = 1.0 - smoothstep(0.3, 0.5, dist);
+        vec3 finalColor = vColor + glowColor;
+        
+        gl_FragColor = vec4(finalColor, alpha * (0.6 + mouseGlow * 0.4));
+      }
+    `,
     transparent: true,
-    opacity: 0.9,
     blending: THREE.AdditiveBlending,
-    sizeAttenuation: true
+    depthWrite: false
   })
 
   particleSystem = new THREE.Points(particleGeometry, particleMaterial)
   scene.add(particleSystem)
-
-  console.log('Particules créées pour la carte du Bénin:', totalParticles)
 }
 
 const onMouseMove = (event) => {
-  if (!container.value) return
-  
   const rect = container.value.getBoundingClientRect()
   mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
   mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
 
-  // Convert to world coordinates
-  const vector = new THREE.Vector3(mouse.x, mouse.y, 0)
+  // Convert normalized mouse coordinates to 3D world position
+  const vector = new THREE.Vector3(mouse.x, mouse.y, 0.5)
   vector.unproject(camera)
-  mouseWorldPos.copy(vector)
+  const mouseWorldPos = vector
 
-  updateParticles()
-}
+  // Add current mouse position to trail
+  mouseTrail.unshift({ x: mouseWorldPos.x, y: mouseWorldPos.y, z: mouseWorldPos.z, time: Date.now() })
+  if (mouseTrail.length > maxTrailLength) {
+    mouseTrail.pop()
+  }
 
-const updateParticles = () => {
-  if (!particleSystem || !particleGeometry) return
+  // Update shader uniforms for visual effects
+  if (particleMaterial) {
+    particleMaterial.uniforms.mousePos.value.set(
+      (mouse.x + 1) * 0.5,
+      (mouse.y + 1) * 0.5
+    )
+    particleMaterial.uniforms.mouseRadius.value = 150.0
+  }
 
-  const positions = particleGeometry.attributes.position.array
-  const interactionRadius = 100
-
-  for (let i = 0; i < originalPositions.length; i++) {
-    const i3 = i * 3
-    const originalPos = originalPositions[i]
+  // Apply multiple interaction effects to particles
+  if (particleSystem && particleGeometry) {
+    const positions = particleGeometry.attributes.position.array
+    const colors = particleGeometry.attributes.color.array
     
-    // Calculate distance from particle to mouse
-    const dx = originalPos.x - mouseWorldPos.x
-    const dy = originalPos.y - mouseWorldPos.y
-    const distance = Math.sqrt(dx * dx + dy * dy)
-    
-    if (distance < interactionRadius) {
-      // Repulsion effect
-      const force = (interactionRadius - distance) / interactionRadius
-      const angle = Math.atan2(dy, dx)
+    for (let i = 0; i < originalPositions.length; i++) {
+      const i3 = i * 3
+      const originalPos = originalPositions[i]
+      const currentPos = new THREE.Vector3(positions[i3], positions[i3 + 1], positions[i3 + 2])
       
-      const pushDistance = force * 60
-      positions[i3] = originalPos.x + Math.cos(angle) * pushDistance
-      positions[i3 + 1] = originalPos.y + Math.sin(angle) * pushDistance
-    } else {
-      // Return to original position
-      const returnSpeed = 0.05
-      positions[i3] += (originalPos.x - positions[i3]) * returnSpeed
-      positions[i3 + 1] += (originalPos.y - positions[i3 + 1]) * returnSpeed
+      // Calculate distance from particle to mouse
+      const mouseDistance = currentPos.distanceTo(mouseWorldPos)
+      const interactionRadius = 120
+      
+      let totalForceX = 0, totalForceY = 0, totalForceZ = 0
+      let isInteracting = false
+      
+      // Main mouse interaction
+      if (mouseDistance < interactionRadius) {
+        isInteracting = true
+        const force = (interactionRadius - mouseDistance) / interactionRadius
+        const direction = currentPos.clone().sub(mouseWorldPos).normalize()
+        
+        // Mix of repulsion and attraction based on distance
+        const repulsionZone = interactionRadius * 0.4
+        if (mouseDistance < repulsionZone) {
+          // Close particles repel
+          const repulsionForce = force * 100
+          totalForceX += direction.x * repulsionForce
+          totalForceY += direction.y * repulsionForce
+          totalForceZ += direction.z * repulsionForce * 0.5
+        } else {
+          // Distant particles are slightly attracted
+          const attractionForce = force * 20
+          totalForceX -= direction.x * attractionForce
+          totalForceY -= direction.y * attractionForce
+          totalForceZ -= direction.z * attractionForce * 0.3
+        }
+      }
+      
+      // Mouse trail following effect
+      for (let j = 0; j < mouseTrail.length; j++) {
+        const trailPoint = mouseTrail[j]
+        const trailDistance = currentPos.distanceTo(new THREE.Vector3(trailPoint.x, trailPoint.y, trailPoint.z))
+        const trailRadius = 80 - (j * 5) // Decreasing influence for older trail points
+        
+        if (trailDistance < trailRadius && trailRadius > 0) {
+          const trailForce = ((trailRadius - trailDistance) / trailRadius) * (1 - j / maxTrailLength)
+          const trailDirection = new THREE.Vector3(trailPoint.x, trailPoint.y, trailPoint.z).sub(currentPos).normalize()
+          
+          const followStrength = 15 * trailForce
+          totalForceX += trailDirection.x * followStrength
+          totalForceY += trailDirection.y * followStrength
+          totalForceZ += trailDirection.z * followStrength * 0.2
+          
+          isInteracting = true
+        }
+      }
+      
+      // Apply forces and update positions
+      if (isInteracting) {
+        positions[i3] = originalPos.x + totalForceX
+        positions[i3 + 1] = originalPos.y + totalForceY
+        positions[i3 + 2] = originalPos.z + totalForceZ
+        
+        // Change color based on interaction intensity
+        const intensity = Math.min(1, Math.sqrt(totalForceX * totalForceX + totalForceY * totalForceY) / 50)
+        colors[i3] = originalColors[i].r + intensity * (1.0 - originalColors[i].r)
+        colors[i3 + 1] = originalColors[i].g + intensity * (0.8 - originalColors[i].g)
+        colors[i3 + 2] = originalColors[i].b + intensity * (0.2 - originalColors[i].b)
+      } else {
+        // Return to original position and color smoothly
+        const returnSpeed = 0.06
+        positions[i3] += (originalPos.x - positions[i3]) * returnSpeed
+        positions[i3 + 1] += (originalPos.y - positions[i3 + 1]) * returnSpeed
+        positions[i3 + 2] += (originalPos.z - positions[i3 + 2]) * returnSpeed
+        
+        // Return to original color
+        const originalColor = originalColors[i]
+        colors[i3] += (originalColor.r - colors[i3]) * returnSpeed
+        colors[i3 + 1] += (originalColor.g - colors[i3 + 1]) * returnSpeed
+        colors[i3 + 2] += (originalColor.b - colors[i3 + 2]) * returnSpeed
+      }
     }
+    
+    particleGeometry.attributes.position.needsUpdate = true
+    particleGeometry.attributes.color.needsUpdate = true
   }
-  
-  particleGeometry.attributes.position.needsUpdate = true
-}
-
-const resetParticles = () => {
-  if (!particleSystem || !particleGeometry) return
-  
-  const positions = particleGeometry.attributes.position.array
-  
-  for (let i = 0; i < originalPositions.length; i++) {
-    const i3 = i * 3
-    positions[i3] = originalPositions[i].x
-    positions[i3 + 1] = originalPositions[i].y
-    positions[i3 + 2] = originalPositions[i].z
-  }
-  
-  particleGeometry.attributes.position.needsUpdate = true
 }
 
 
@@ -227,15 +314,16 @@ const resetParticles = () => {
 const animate = () => {
   animationId = requestAnimationFrame(animate)
   
-  if (particleSystem) {
-    // Rotation très subtile pour garder la forme reconnaissable
+  if (particleSystem && particleMaterial) {
+    // Update time uniform for wave animation
+    particleMaterial.uniforms.time.value = Date.now()
+    
+    // Gentle rotation
     particleSystem.rotation.y += 0.0005
-    particleSystem.rotation.z = Math.sin(Date.now() * 0.0001) * 0.05 // Balancement léger
+    particleSystem.rotation.x += 0.0002
   }
   
-  if (renderer && scene && camera) {
-    renderer.render(scene, camera)
-  }
+  renderer.render(scene, camera)
 }
 
 const onWindowResize = () => {
@@ -257,10 +345,9 @@ onUnmounted(() => {
   
   if (container.value && renderer) {
     container.value.removeEventListener('mousemove', onMouseMove)
-    container.value.removeEventListener('mouseleave', resetParticles)
     window.removeEventListener('resize', onWindowResize)
     
-    if (renderer.domElement && renderer.domElement.parentNode) {
+    if (renderer.domElement.parentNode) {
       renderer.domElement.parentNode.removeChild(renderer.domElement)
     }
     renderer.dispose()
