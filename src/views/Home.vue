@@ -174,6 +174,204 @@
       </div>
     </section>
 
+    <!-- About Section -->
+    <section id="about" class="about-section">
+      <div class="container">
+        <div class="about-content">
+          <div class="about-text" data-aos="fade-right" data-aos-duration="1000">
+            <h2 class="section-title">À Propos de Notre Plateforme</h2>
+            <p class="section-description">
+              Plateforme Foncier Intelligent révolutionne la gestion immobilière en Côte d'Ivoire 
+              grâce à des technologies de pointe et une approche centrée sur la transparence.
+            </p>
+            
+            <div class="about-features">
+              <div class="about-feature" v-for="aboutFeature in aboutFeatures" :key="aboutFeature.id">
+                <div class="about-feature-icon">
+                  <i :class="aboutFeature.icon"></i>
+                </div>
+                <div class="about-feature-content">
+                  <h4>{{ aboutFeature.title }}</h4>
+                  <p>{{ aboutFeature.description }}</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="about-stats">
+              <div class="about-stat">
+                <span class="stat-value">2025</span>
+                <span class="stat-desc">Année de création</span>
+              </div>
+              <div class="about-stat">
+                <span class="stat-value">100%</span>
+                <span class="stat-desc">Sécurisé</span>
+              </div>
+              <div class="about-stat">
+                <span class="stat-value">24/7</span>
+                <span class="stat-desc">Support</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="about-visual" data-aos="fade-left" data-aos-duration="1200">
+            <div class="about-image">
+              <div class="about-card modern-about-card">
+                <div class="card-header">
+                  <i class="fas fa-shield-alt"></i>
+                  <span>Sécurité Blockchain</span>
+                </div>
+                <div class="security-indicators">
+                  <div class="security-item" v-for="n in 4" :key="n">
+                    <div class="security-dot"></div>
+                    <span>Couche {{ n }} validée</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="about-card modern-about-card tech-card">
+                <div class="card-header">
+                  <i class="fas fa-brain"></i>
+                  <span>IA Avancée</span>
+                </div>
+                <div class="tech-progress">
+                  <div class="tech-item" v-for="tech in techProgress" :key="tech.name">
+                    <span>{{ tech.name }}</span>
+                    <div class="progress-bar mini-progress">
+                      <div class="progress-fill" :style="{ width: tech.progress + '%' }"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="contact-section">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">Contactez-Nous</h2>
+          <p class="section-description">
+            Une question ? Un projet ? Notre équipe est là pour vous accompagner
+          </p>
+        </div>
+        
+        <div class="contact-content">
+          <div class="contact-info" data-aos="fade-right" data-aos-duration="800">
+            <div class="contact-item" v-for="contactInfo in contactInfos" :key="contactInfo.id">
+              <div class="contact-icon">
+                <i :class="contactInfo.icon"></i>
+              </div>
+              <div class="contact-details">
+                <h4>{{ contactInfo.title }}</h4>
+                <p>{{ contactInfo.description }}</p>
+                <span class="contact-value">{{ contactInfo.value }}</span>
+              </div>
+            </div>
+            
+            <div class="social-links">
+              <h4>Suivez-nous</h4>
+              <div class="social-icons">
+                <a href="#" class="social-link" v-for="social in socialLinks" :key="social.name">
+                  <i :class="social.icon"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+          
+          <div class="contact-form-wrapper" data-aos="fade-left" data-aos-duration="800">
+            <form class="contact-form modern-form" @submit.prevent="submitContactForm">
+              <div class="form-row">
+                <div class="form-group">
+                  <input 
+                    type="text" 
+                    id="firstName" 
+                    v-model="contactForm.firstName" 
+                    required
+                    class="form-input"
+                    placeholder=" "
+                  >
+                  <label for="firstName" class="form-label">Prénom</label>
+                </div>
+                <div class="form-group">
+                  <input 
+                    type="text" 
+                    id="lastName" 
+                    v-model="contactForm.lastName" 
+                    required
+                    class="form-input"
+                    placeholder=" "
+                  >
+                  <label for="lastName" class="form-label">Nom</label>
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <input 
+                  type="email" 
+                  id="email" 
+                  v-model="contactForm.email" 
+                  required
+                  class="form-input"
+                  placeholder=" "
+                >
+                <label for="email" class="form-label">Email</label>
+              </div>
+              
+              <div class="form-group">
+                <input 
+                  type="tel" 
+                  id="phone" 
+                  v-model="contactForm.phone" 
+                  class="form-input"
+                  placeholder=" "
+                >
+                <label for="phone" class="form-label">Téléphone</label>
+              </div>
+              
+              <div class="form-group">
+                <select 
+                  id="subject" 
+                  v-model="contactForm.subject" 
+                  required
+                  class="form-select"
+                >
+                  <option value="">Choisir un sujet</option>
+                  <option value="general">Question générale</option>
+                  <option value="support">Support technique</option>
+                  <option value="partnership">Partenariat</option>
+                  <option value="demo">Demande de démo</option>
+                </select>
+                <label for="subject" class="form-label">Sujet</label>
+              </div>
+              
+              <div class="form-group">
+                <textarea 
+                  id="message" 
+                  v-model="contactForm.message" 
+                  required
+                  class="form-textarea"
+                  rows="5"
+                  placeholder=" "
+                ></textarea>
+                <label for="message" class="form-label">Message</label>
+              </div>
+              
+              <button type="submit" class="submit-btn modern-btn" :disabled="isSubmitting">
+                <span v-if="!isSubmitting">Envoyer le Message</span>
+                <span v-else>Envoi en cours...</span>
+                <i class="fas fa-paper-plane" v-if="!isSubmitting"></i>
+                <i class="fas fa-spinner fa-spin" v-else></i>
+                <div class="btn-ripple"></div>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- Footer -->
     <footer class="footer">
       <div class="container">
@@ -219,6 +417,17 @@ import ParticlesAnimation from '../components/ParticlesAnimation.vue'
 const statNumbers = ref([])
 const aiProgress = ref(0)
 const isAnimating = ref(false)
+const isSubmitting = ref(false)
+
+// Formulaire de contact
+const contactForm = ref({
+  firstName: '',
+  lastName: '',
+  email: '',
+  phone: '',
+  subject: '',
+  message: ''
+})
 
 const features = [
   {
@@ -257,6 +466,74 @@ const features = [
     title: 'Application Mobile',
     description: 'Accès mobile pour gérer vos propriétés partout'
   }
+]
+
+// Données pour la section À propos
+const aboutFeatures = [
+  {
+    id: 1,
+    icon: 'fas fa-eye',
+    title: 'Transparence',
+    description: 'Toutes les transactions sont transparentes et vérifiables'
+  },
+  {
+    id: 2,
+    icon: 'fas fa-users',
+    title: 'Communauté',
+    description: 'Une communauté active de plus de 10,000 utilisateurs'
+  },
+  {
+    id: 3,
+    icon: 'fas fa-award',
+    title: 'Excellence',
+    description: 'Reconnu pour notre innovation dans le secteur immobilier'
+  }
+]
+
+const techProgress = [
+  { name: 'Machine Learning', progress: 95 },
+  { name: 'Blockchain', progress: 88 },
+  { name: 'Computer Vision', progress: 92 },
+  { name: 'Data Analytics', progress: 90 }
+]
+
+// Données pour la section Contact
+const contactInfos = [
+  {
+    id: 1,
+    icon: 'fas fa-map-marker-alt',
+    title: 'Adresse',
+    description: 'Siège social',
+    value: 'Abidjan, Plateau - Côte d\'Ivoire'
+  },
+  {
+    id: 2,
+    icon: 'fas fa-phone',
+    title: 'Téléphone',
+    description: 'Disponible 24/7',
+    value: '+225 XX XX XX XX XX'
+  },
+  {
+    id: 3,
+    icon: 'fas fa-envelope',
+    title: 'Email',
+    description: 'Réponse sous 24h',
+    value: 'contact@foncier-intelligent.ci'
+  },
+  {
+    id: 4,
+    icon: 'fas fa-clock',
+    title: 'Horaires',
+    description: 'Lun - Ven',
+    value: '8h00 - 18h00 GMT'
+  }
+]
+
+const socialLinks = [
+  { name: 'Facebook', icon: 'fab fa-facebook-f' },
+  { name: 'Twitter', icon: 'fab fa-twitter' },
+  { name: 'LinkedIn', icon: 'fab fa-linkedin-in' },
+  { name: 'Instagram', icon: 'fab fa-instagram' }
 ]
 
 const stats = [
@@ -303,6 +580,30 @@ const scrollToFeatures = () => {
 
 const toggleMobileMenu = () => {
   // Implémentation du menu mobile
+}
+
+// Fonction pour soumettre le formulaire de contact
+const submitContactForm = async () => {
+  if (isSubmitting.value) return
+  
+  isSubmitting.value = true
+  
+  try {
+    // Simulation d'envoi du formulaire
+    await new Promise(resolve => setTimeout(resolve, 2000))
+    
+    // Reset du formulaire
+    Object.keys(contactForm.value).forEach(key => {
+      contactForm.value[key] = ''
+    })
+    
+    // Notification de succès (vous pouvez ajouter une vraie notification)
+    alert('Message envoyé avec succès ! Nous vous répondrons rapidement.')
+  } catch (error) {
+    alert('Erreur lors de l\'envoi du message. Veuillez réessayer.')
+  } finally {
+    isSubmitting.value = false
+  }
 }
 
 // Nouvelles fonctions d'animation
@@ -895,6 +1196,394 @@ onUnmounted(() => {
   100% { transform: rotate(360deg); }
 }
 
+/* About Section */
+.about-section {
+  padding: 100px 0;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.about-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="%23e2e8f0" stroke-width="0.5"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)"/></svg>') center/50px 50px;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.about-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+}
+
+.about-features {
+  margin: 40px 0;
+}
+
+.about-feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 30px;
+  padding: 25px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 16px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.about-feature:hover {
+  transform: translateX(10px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.about-feature-icon {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #46e569, #32b363);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.about-feature-icon i {
+  font-size: 24px;
+  color: white;
+}
+
+.about-feature-content h4 {
+  margin: 0 0 8px 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.about-feature-content p {
+  margin: 0;
+  color: #718096;
+  line-height: 1.6;
+}
+
+.about-stats {
+  display: flex;
+  gap: 40px;
+  margin-top: 40px;
+}
+
+.about-stat {
+  text-align: center;
+}
+
+.stat-value {
+  display: block;
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #46e569;
+  margin-bottom: 8px;
+}
+
+.stat-desc {
+  font-size: 0.875rem;
+  color: #718096;
+  font-weight: 500;
+}
+
+.about-visual {
+  position: relative;
+}
+
+.about-image {
+  position: relative;
+  height: 500px;
+}
+
+.modern-about-card {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 25px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.modern-about-card:first-child {
+  top: 0;
+  left: 0;
+  width: 280px;
+  animation: cardFloat 6s ease-in-out infinite;
+}
+
+.tech-card {
+  top: 200px;
+  right: 0;
+  width: 260px;
+  animation: cardFloat 6s ease-in-out infinite 1s;
+}
+
+.security-indicators {
+  margin-top: 20px;
+}
+
+.security-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  font-size: 0.875rem;
+  color: #4a5568;
+}
+
+.security-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #46e569;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.tech-progress {
+  margin-top: 20px;
+}
+
+.tech-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  font-size: 0.875rem;
+  color: #4a5568;
+}
+
+.mini-progress {
+  width: 100px;
+  height: 6px;
+  margin-left: 15px;
+}
+
+/* Contact Section */
+.contact-section {
+  padding: 100px 0;
+  background: linear-gradient(135deg, #2d3748 0%, #4a5568 50%, #1a202c 100%);
+  color: white;
+}
+
+.contact-content {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 80px;
+  margin-top: 60px;
+}
+
+.contact-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 40px;
+  padding: 25px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.contact-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-5px);
+}
+
+.contact-icon {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #46e569, #32b363);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.contact-icon i {
+  font-size: 24px;
+  color: white;
+}
+
+.contact-details h4 {
+  margin: 0 0 8px 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.contact-details p {
+  margin: 0 0 8px 0;
+  color: #a0aec0;
+  font-size: 0.875rem;
+}
+
+.contact-value {
+  font-weight: 600;
+  color: #46e569;
+}
+
+.social-links {
+  margin-top: 40px;
+}
+
+.social-links h4 {
+  margin-bottom: 20px;
+  color: #46e569;
+}
+
+.social-icons {
+  display: flex;
+  gap: 15px;
+}
+
+.social-link {
+  width: 45px;
+  height: 45px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.social-link:hover {
+  background: #46e569;
+  transform: translateY(-3px);
+  box-shadow: 0 10px 20px rgba(70, 229, 105, 0.3);
+}
+
+/* Formulaire moderne */
+.contact-form-wrapper {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  padding: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modern-form {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.form-group {
+  position: relative;
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+  width: 100%;
+  padding: 16px 20px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  outline: none;
+  border-color: #46e569;
+  box-shadow: 0 0 0 3px rgba(70, 229, 105, 0.1);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.form-input::placeholder,
+.form-textarea::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.form-label {
+  position: absolute;
+  top: 16px;
+  left: 20px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 16px;
+  transition: all 0.3s ease;
+  pointer-events: none;
+  background: transparent;
+}
+
+.form-input:focus + .form-label,
+.form-input:not(:placeholder-shown) + .form-label,
+.form-textarea:focus + .form-label,
+.form-textarea:not(:placeholder-shown) + .form-label {
+  top: -10px;
+  left: 15px;
+  font-size: 12px;
+  color: #46e569;
+  background: #2d3748;
+  padding: 0 8px;
+  border-radius: 4px;
+}
+
+.form-select {
+  cursor: pointer;
+}
+
+.form-select option {
+  background: #2d3748;
+  color: white;
+}
+
+.submit-btn {
+  background: linear-gradient(135deg, #46e569, #32b363);
+  color: white;
+  border: none;
+  padding: 18px 40px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.submit-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(70, 229, 105, 0.3);
+}
+
+.submit-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
 /* CTA Section */
 .cta-section {
   padding: 100px 0;
@@ -1100,6 +1789,33 @@ onUnmounted(() => {
 
 /* Responsive */
 @media (max-width: 768px) {
+  .about-content {
+    grid-template-columns: 1fr;
+    gap: 50px;
+  }
+  
+  .about-stats {
+    justify-content: center;
+    gap: 30px;
+  }
+  
+  .about-image {
+    height: 400px;
+  }
+  
+  .contact-content {
+    grid-template-columns: 1fr;
+    gap: 50px;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .contact-form-wrapper {
+    padding: 30px 20px;
+  }
+  
   .nav-links {
     display: none;
   }
