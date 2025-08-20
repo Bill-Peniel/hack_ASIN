@@ -47,6 +47,27 @@ const initThreeJS = () => {
   // Event listeners
   container.value.addEventListener('mousemove', onMouseMove, false)
   container.value.addEventListener('click', onMouseClick, false)
+  container.value.addEventListener('mouseleave', () => {
+    // Reset all particles when mouse leaves
+    if (particleSystem && particleGeometry) {
+      const positions = particleGeometry.attributes.position.array
+      const colors = particleGeometry.attributes.color.array
+      
+      for (let i = 0; i < originalPositions.length; i++) {
+        const i3 = i * 3
+        positions[i3] = originalPositions[i].x
+        positions[i3 + 1] = originalPositions[i].y
+        positions[i3 + 2] = originalPositions[i].z
+        
+        colors[i3] = originalColors[i].r
+        colors[i3 + 1] = originalColors[i].g
+        colors[i3 + 2] = originalColors[i].b
+      }
+      
+      particleGeometry.attributes.position.needsUpdate = true
+      particleGeometry.attributes.color.needsUpdate = true
+    }
+  }, false)
   window.addEventListener('resize', onWindowResize, false)
 
   // Start animation loop
@@ -54,7 +75,7 @@ const initThreeJS = () => {
 }
 
 const createParticles = () => {
-  const particleCount = 2000
+  const particleCount = 1500 // Reduced for better performance
   const positions = new Float32Array(particleCount * 3)
   const colors = new Float32Array(particleCount * 3)
   const sizes = new Float32Array(particleCount)
@@ -65,13 +86,13 @@ const createParticles = () => {
     const i3 = i * 3
 
     // Position - create a more organic distribution
-    const radius = Math.random() * 600 + 100
+    const radius = Math.random() * 500 + 50
     const theta = Math.random() * Math.PI * 2
     const phi = Math.random() * Math.PI
 
     positions[i3] = radius * Math.sin(phi) * Math.cos(theta)
     positions[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta) 
-    positions[i3 + 2] = radius * Math.cos(phi)
+    positions[i3 + 2] = (radius * Math.cos(phi)) * 0.3 // Flatten Z for better interaction
 
     // Store original positions
     originalPositions.push({
@@ -80,9 +101,9 @@ const createParticles = () => {
       z: positions[i3 + 2]
     })
 
-    // Colors - gradient from green to blue
+    // Colors - gradient from green to blue with more variety
     const mixRatio = Math.random()
-    color.setHSL(0.3 + mixRatio * 0.3, 0.8, 0.6) // Green to cyan gradient
+    color.setHSL(0.25 + mixRatio * 0.35, 0.7 + Math.random() * 0.3, 0.5 + Math.random() * 0.3)
     colors[i3] = color.r
     colors[i3 + 1] = color.g
     colors[i3 + 2] = color.b
@@ -90,8 +111,8 @@ const createParticles = () => {
     // Store original colors
     originalColors.push({ r: color.r, g: color.g, b: color.b })
 
-    // Sizes
-    sizes[i] = Math.random() * 8 + 2
+    // Sizes with more variation
+    sizes[i] = Math.random() * 6 + 3
   }
 
   particleGeometry = new THREE.BufferGeometry()
@@ -175,42 +196,67 @@ const onMouseMove = (event) => {
   mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
   mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
 
-  // Update shader uniforms
+  // Convert normalized mouse coordinates to 3D world position
+  const vector = new THREE.Vector3(mouse.x, mouse.y, 0.5)
+  vector.unproject(camera)
+  
+  const mouseWorldPos = vector
+
+  // Update shader uniforms for visual effects
   if (particleMaterial) {
     particleMaterial.uniforms.mousePos.value.set(
       (mouse.x + 1) * 0.5,
       (mouse.y + 1) * 0.5
     )
+    particleMaterial.uniforms.mouseRadius.value = 200.0
   }
 
-  // Repulsion effect
-  raycaster.setFromCamera(mouse, camera)
-  
-  if (particleSystem) {
+  // Apply repulsion effect to particles
+  if (particleSystem && particleGeometry) {
     const positions = particleGeometry.attributes.position.array
-    const mouseWorldPos = new THREE.Vector3(mouse.x, mouse.y, 0.5).unproject(camera)
+    const colors = particleGeometry.attributes.color.array
     
-    for (let i = 0; i < positions.length; i += 3) {
-      const particlePos = new THREE.Vector3(positions[i], positions[i + 1], positions[i + 2])
-      const distance = particlePos.distanceTo(mouseWorldPos)
+    for (let i = 0; i < originalPositions.length; i++) {
+      const i3 = i * 3
+      const originalPos = originalPositions[i]
+      const currentPos = new THREE.Vector3(positions[i3], positions[i3 + 1], positions[i3 + 2])
       
-      if (distance < 150) {
-        const force = (150 - distance) / 150
-        const direction = particlePos.clone().sub(mouseWorldPos).normalize()
+      // Calculate distance from particle to mouse
+      const distance = currentPos.distanceTo(mouseWorldPos)
+      const maxDistance = 100 // Interaction radius
+      
+      if (distance < maxDistance) {
+        // Calculate repulsion force
+        const force = (maxDistance - distance) / maxDistance
+        const direction = currentPos.clone().sub(mouseWorldPos).normalize()
         
-        positions[i] = originalPositions[i / 3].x + direction.x * force * 50
-        positions[i + 1] = originalPositions[i / 3].y + direction.y * force * 50
-        positions[i + 2] = originalPositions[i / 3].z + direction.z * force * 30
+        // Apply stronger repulsion
+        const repulsionStrength = 80
+        positions[i3] = originalPos.x + direction.x * force * repulsionStrength
+        positions[i3 + 1] = originalPos.y + direction.y * force * repulsionStrength
+        positions[i3 + 2] = originalPos.z + direction.z * force * repulsionStrength
+        
+        // Change color on interaction
+        colors[i3] = 1.0 // More red
+        colors[i3 + 1] = 1.0 // More green  
+        colors[i3 + 2] = 0.3 // Less blue
       } else {
-        // Return to original position
-        const returnSpeed = 0.05
-        positions[i] += (originalPositions[i / 3].x - positions[i]) * returnSpeed
-        positions[i + 1] += (originalPositions[i / 3].y - positions[i + 1]) * returnSpeed
-        positions[i + 2] += (originalPositions[i / 3].z - positions[i + 2]) * returnSpeed
+        // Return to original position and color smoothly
+        const returnSpeed = 0.08
+        positions[i3] += (originalPos.x - positions[i3]) * returnSpeed
+        positions[i3 + 1] += (originalPos.y - positions[i3 + 1]) * returnSpeed
+        positions[i3 + 2] += (originalPos.z - positions[i3 + 2]) * returnSpeed
+        
+        // Return to original color
+        const originalColor = originalColors[i]
+        colors[i3] += (originalColor.r - colors[i3]) * returnSpeed
+        colors[i3 + 1] += (originalColor.g - colors[i3 + 1]) * returnSpeed
+        colors[i3 + 2] += (originalColor.b - colors[i3 + 2]) * returnSpeed
       }
     }
     
     particleGeometry.attributes.position.needsUpdate = true
+    particleGeometry.attributes.color.needsUpdate = true
   }
 }
 
