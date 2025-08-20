@@ -1,4 +1,5 @@
-modules = ["nodejs-20"]
+modules = ["vue-node-20", "nodejs-20", "web"]
+run = "node index.js"
 [agent]
 expertMode = true
 
@@ -36,3 +37,6 @@ externalPort = 80
 [[ports]]
 localPort = 5001
 externalPort = 3000
+
+[deployment]
+run = ["sh", "-c", "node index.js"]
