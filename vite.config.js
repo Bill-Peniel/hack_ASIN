@@ -21,10 +21,7 @@ export default defineConfig({
     port: 5000,
     open: true,
     cors: true,
-    allowedHosts: [
-      'all',
-      'cdb577b3-1f1b-438a-bd7a-fbb4d98a7cfe-00-1wtzioy8appcv.janeway.replit.dev'
-    ]
+    allowedHosts: 'all'
   },
   build: {
     outDir: 'dist',

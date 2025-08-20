@@ -30,34 +30,38 @@
             <div class="row">
               <div class="col-md-6">
                 <table class="table table-borderless">
-                  <tr>
-                    <th>Type:</th>
-                    <td>{{ property.type }}</td>
-                  </tr>
-                  <tr>
-                    <th>Surface:</th>
-                    <td>{{ property.area }} m²</td>
-                  </tr>
-                  <tr>
-                    <th>Prix:</th>
-                    <td>{{ property.price ? formatPrice(property.price) : 'Non défini' }}</td>
-                  </tr>
+                  <tbody>
+                    <tr>
+                      <th>Type:</th>
+                      <td>{{ property.type }}</td>
+                    </tr>
+                    <tr>
+                      <th>Surface:</th>
+                      <td>{{ property.area }} m²</td>
+                    </tr>
+                    <tr>
+                      <th>Prix:</th>
+                      <td>{{ property.price ? formatPrice(property.price) : 'Non défini' }}</td>
+                    </tr>
+                  </tbody>
                 </table>
               </div>
               <div class="col-md-6">
                 <table class="table table-borderless">
-                  <tr>
-                    <th>Région:</th>
-                    <td>{{ property.location.region }}</td>
-                  </tr>
-                  <tr>
-                    <th>Ville:</th>
-                    <td>{{ property.location.city }}</td>
-                  </tr>
-                  <tr>
-                    <th>Coordonnées GPS:</th>
-                    <td>{{ property.location.coordinates.lat }}, {{ property.location.coordinates.lng }}</td>
-                  </tr>
+                  <tbody>
+                    <tr>
+                      <th>Région:</th>
+                      <td>{{ property.location.region }}</td>
+                    </tr>
+                    <tr>
+                      <th>Ville:</th>
+                      <td>{{ property.location.city }}</td>
+                    </tr>
+                    <tr>
+                      <th>Coordonnées GPS:</th>
+                      <td>{{ property.location.coordinates.lat }}, {{ property.location.coordinates.lng }}</td>
+                    </tr>
+                  </tbody>
                 </table>
               </div>
             </div>

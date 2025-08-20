@@ -137,47 +137,51 @@
               <div class="col-md-6">
                 <h6>Informations personnelles</h6>
                 <table class="table table-sm">
-                  <tr>
-                    <th>Nom complet:</th>
-                    <td>{{ selectedUser.firstName }} {{ selectedUser.lastName }}</td>
-                  </tr>
-                  <tr>
-                    <th>Email:</th>
-                    <td>{{ selectedUser.email }}</td>
-                  </tr>
-                  <tr>
-                    <th>Téléphone:</th>
-                    <td>{{ selectedUser.phone }}</td>
-                  </tr>
-                  <tr>
-                    <th>Rôle:</th>
-                    <td>
-                      <span class="badge" :class="getRoleBadgeClass(selectedUser.role)">
-                        {{ getRoleLabel(selectedUser.role) }}
-                      </span>
-                    </td>
-                  </tr>
+                  <tbody>
+                    <tr>
+                      <th>Nom complet:</th>
+                      <td>{{ selectedUser.firstName }} {{ selectedUser.lastName }}</td>
+                    </tr>
+                    <tr>
+                      <th>Email:</th>
+                      <td>{{ selectedUser.email }}</td>
+                    </tr>
+                    <tr>
+                      <th>Téléphone:</th>
+                      <td>{{ selectedUser.phone }}</td>
+                    </tr>
+                    <tr>
+                      <th>Rôle:</th>
+                      <td>
+                        <span class="badge" :class="getRoleBadgeClass(selectedUser.role)">
+                          {{ getRoleLabel(selectedUser.role) }}
+                        </span>
+                      </td>
+                    </tr>
+                  </tbody>
                 </table>
               </div>
               <div class="col-md-6">
                 <h6>Informations système</h6>
                 <table class="table table-sm">
-                  <tr>
-                    <th>Statut:</th>
-                    <td>
-                      <span class="badge" :class="getStatusBadgeClass(selectedUser.status)">
-                        {{ getStatusLabel(selectedUser.status) }}
-                      </span>
-                    </td>
-                  </tr>
-                  <tr>
-                    <th>Date d'inscription:</th>
-                    <td>{{ formatDate(selectedUser.createdAt) }}</td>
-                  </tr>
-                  <tr>
-                    <th>Dernière mise à jour:</th>
-                    <td>{{ formatDate(selectedUser.updatedAt) }}</td>
-                  </tr>
+                  <tbody>
+                    <tr>
+                      <th>Statut:</th>
+                      <td>
+                        <span class="badge" :class="getStatusBadgeClass(selectedUser.status)">
+                          {{ getStatusLabel(selectedUser.status) }}
+                        </span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th>Date d'inscription:</th>
+                      <td>{{ formatDate(selectedUser.createdAt) }}</td>
+                    </tr>
+                    <tr>
+                      <th>Dernière mise à jour:</th>
+                      <td>{{ formatDate(selectedUser.updatedAt) }}</td>
+                    </tr>
+                  </tbody>
                 </table>
               </div>
             </div>
