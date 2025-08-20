@@ -218,22 +218,24 @@
               <div class="purchase-breakdown">
                 <h6>Récapitulatif</h6>
                 <table class="table table-borderless">
-                  <tr>
-                    <td>Prix de la propriété</td>
-                    <td class="text-end">{{ formatPrice(amount) }}</td>
-                  </tr>
-                  <tr>
-                    <td>Frais de plateforme (3%)</td>
-                    <td class="text-end">{{ formatPrice(amount * 0.03) }}</td>
-                  </tr>
-                  <tr>
-                    <td>Frais de transaction</td>
-                    <td class="text-end">{{ formatPrice(5000) }}</td>
-                  </tr>
-                  <tr class="fw-bold border-top">
-                    <td>Total à payer</td>
-                    <td class="text-end">{{ formatPrice(amount + (amount * 0.03) + 5000) }}</td>
-                  </tr>
+                  <tbody>
+                    <tr>
+                      <td>Prix de la propriété</td>
+                      <td class="text-end">{{ formatPrice(amount) }}</td>
+                    </tr>
+                    <tr>
+                      <td>Frais de plateforme (3%)</td>
+                      <td class="text-end">{{ formatPrice(amount * 0.03) }}</td>
+                    </tr>
+                    <tr>
+                      <td>Frais de transaction</td>
+                      <td class="text-end">{{ formatPrice(5000) }}</td>
+                    </tr>
+                    <tr class="fw-bold border-top">
+                      <td>Total à payer</td>
+                      <td class="text-end">{{ formatPrice(amount + (amount * 0.03) + 5000) }}</td>
+                    </tr>
+                  </tbody>
                 </table>
               </div>
               
