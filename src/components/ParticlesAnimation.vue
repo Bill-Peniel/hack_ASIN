@@ -7,13 +7,15 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import * as THREE from 'three'
 
 const container = ref(null)
-let scene, camera, renderer, particles, mouse, raycaster, intersectedParticle
+let scene, camera, renderer, particles, mouse, raycaster
 let particleSystem, particleGeometry, particleMaterial
 let animationId
 
 const mouse3D = new THREE.Vector2()
 const originalColors = []
 const originalPositions = []
+const mouseTrail = []
+const maxTrailLength = 10
 
 const initThreeJS = () => {
   if (!container.value) return
@@ -46,7 +48,6 @@ const initThreeJS = () => {
   
   // Event listeners
   container.value.addEventListener('mousemove', onMouseMove, false)
-  container.value.addEventListener('click', onMouseClick, false)
   container.value.addEventListener('mouseleave', () => {
     // Reset all particles when mouse leaves
     if (particleSystem && particleGeometry) {
@@ -67,6 +68,8 @@ const initThreeJS = () => {
       particleGeometry.attributes.position.needsUpdate = true
       particleGeometry.attributes.color.needsUpdate = true
     }
+    // Clear mouse trail
+    mouseTrail.length = 0
   }, false)
   window.addEventListener('resize', onWindowResize, false)
 
@@ -199,8 +202,13 @@ const onMouseMove = (event) => {
   // Convert normalized mouse coordinates to 3D world position
   const vector = new THREE.Vector3(mouse.x, mouse.y, 0.5)
   vector.unproject(camera)
-  
   const mouseWorldPos = vector
+
+  // Add current mouse position to trail
+  mouseTrail.unshift({ x: mouseWorldPos.x, y: mouseWorldPos.y, z: mouseWorldPos.z, time: Date.now() })
+  if (mouseTrail.length > maxTrailLength) {
+    mouseTrail.pop()
+  }
 
   // Update shader uniforms for visual effects
   if (particleMaterial) {
@@ -208,10 +216,10 @@ const onMouseMove = (event) => {
       (mouse.x + 1) * 0.5,
       (mouse.y + 1) * 0.5
     )
-    particleMaterial.uniforms.mouseRadius.value = 200.0
+    particleMaterial.uniforms.mouseRadius.value = 150.0
   }
 
-  // Apply repulsion effect to particles
+  // Apply multiple interaction effects to particles
   if (particleSystem && particleGeometry) {
     const positions = particleGeometry.attributes.position.array
     const colors = particleGeometry.attributes.color.array
@@ -222,27 +230,68 @@ const onMouseMove = (event) => {
       const currentPos = new THREE.Vector3(positions[i3], positions[i3 + 1], positions[i3 + 2])
       
       // Calculate distance from particle to mouse
-      const distance = currentPos.distanceTo(mouseWorldPos)
-      const maxDistance = 100 // Interaction radius
+      const mouseDistance = currentPos.distanceTo(mouseWorldPos)
+      const interactionRadius = 120
       
-      if (distance < maxDistance) {
-        // Calculate repulsion force
-        const force = (maxDistance - distance) / maxDistance
+      let totalForceX = 0, totalForceY = 0, totalForceZ = 0
+      let isInteracting = false
+      
+      // Main mouse interaction
+      if (mouseDistance < interactionRadius) {
+        isInteracting = true
+        const force = (interactionRadius - mouseDistance) / interactionRadius
         const direction = currentPos.clone().sub(mouseWorldPos).normalize()
         
-        // Apply stronger repulsion
-        const repulsionStrength = 80
-        positions[i3] = originalPos.x + direction.x * force * repulsionStrength
-        positions[i3 + 1] = originalPos.y + direction.y * force * repulsionStrength
-        positions[i3 + 2] = originalPos.z + direction.z * force * repulsionStrength
+        // Mix of repulsion and attraction based on distance
+        const repulsionZone = interactionRadius * 0.4
+        if (mouseDistance < repulsionZone) {
+          // Close particles repel
+          const repulsionForce = force * 100
+          totalForceX += direction.x * repulsionForce
+          totalForceY += direction.y * repulsionForce
+          totalForceZ += direction.z * repulsionForce * 0.5
+        } else {
+          // Distant particles are slightly attracted
+          const attractionForce = force * 20
+          totalForceX -= direction.x * attractionForce
+          totalForceY -= direction.y * attractionForce
+          totalForceZ -= direction.z * attractionForce * 0.3
+        }
+      }
+      
+      // Mouse trail following effect
+      for (let j = 0; j < mouseTrail.length; j++) {
+        const trailPoint = mouseTrail[j]
+        const trailDistance = currentPos.distanceTo(new THREE.Vector3(trailPoint.x, trailPoint.y, trailPoint.z))
+        const trailRadius = 80 - (j * 5) // Decreasing influence for older trail points
         
-        // Change color on interaction
-        colors[i3] = 1.0 // More red
-        colors[i3 + 1] = 1.0 // More green  
-        colors[i3 + 2] = 0.3 // Less blue
+        if (trailDistance < trailRadius && trailRadius > 0) {
+          const trailForce = ((trailRadius - trailDistance) / trailRadius) * (1 - j / maxTrailLength)
+          const trailDirection = new THREE.Vector3(trailPoint.x, trailPoint.y, trailPoint.z).sub(currentPos).normalize()
+          
+          const followStrength = 15 * trailForce
+          totalForceX += trailDirection.x * followStrength
+          totalForceY += trailDirection.y * followStrength
+          totalForceZ += trailDirection.z * followStrength * 0.2
+          
+          isInteracting = true
+        }
+      }
+      
+      // Apply forces and update positions
+      if (isInteracting) {
+        positions[i3] = originalPos.x + totalForceX
+        positions[i3 + 1] = originalPos.y + totalForceY
+        positions[i3 + 2] = originalPos.z + totalForceZ
+        
+        // Change color based on interaction intensity
+        const intensity = Math.min(1, Math.sqrt(totalForceX * totalForceX + totalForceY * totalForceY) / 50)
+        colors[i3] = originalColors[i].r + intensity * (1.0 - originalColors[i].r)
+        colors[i3 + 1] = originalColors[i].g + intensity * (0.8 - originalColors[i].g)
+        colors[i3 + 2] = originalColors[i].b + intensity * (0.2 - originalColors[i].b)
       } else {
         // Return to original position and color smoothly
-        const returnSpeed = 0.08
+        const returnSpeed = 0.06
         positions[i3] += (originalPos.x - positions[i3]) * returnSpeed
         positions[i3 + 1] += (originalPos.y - positions[i3 + 1]) * returnSpeed
         positions[i3 + 2] += (originalPos.z - positions[i3 + 2]) * returnSpeed
@@ -260,76 +309,7 @@ const onMouseMove = (event) => {
   }
 }
 
-const onMouseClick = (event) => {
-  // Create explosion effect at click position
-  const rect = container.value.getBoundingClientRect()
-  mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
-  mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
-  
-  createExplosionEffect(mouse)
-}
 
-const createExplosionEffect = (clickPos) => {
-  const explosionGeometry = new THREE.BufferGeometry()
-  const explosionCount = 50
-  const positions = new Float32Array(explosionCount * 3)
-  const velocities = []
-  
-  const clickWorldPos = new THREE.Vector3(clickPos.x, clickPos.y, 0).unproject(camera)
-  
-  for (let i = 0; i < explosionCount; i++) {
-    const i3 = i * 3
-    positions[i3] = clickWorldPos.x
-    positions[i3 + 1] = clickWorldPos.y
-    positions[i3 + 2] = clickWorldPos.z
-    
-    // Random velocity for explosion
-    velocities.push({
-      x: (Math.random() - 0.5) * 20,
-      y: (Math.random() - 0.5) * 20,
-      z: (Math.random() - 0.5) * 10
-    })
-  }
-  
-  explosionGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
-  
-  const explosionMaterial = new THREE.PointsMaterial({
-    color: 0x46e569,
-    size: 5,
-    transparent: true,
-    opacity: 1
-  })
-  
-  const explosionParticles = new THREE.Points(explosionGeometry, explosionMaterial)
-  scene.add(explosionParticles)
-  
-  // Animate explosion
-  let explosionTime = 0
-  const animateExplosion = () => {
-    explosionTime += 16
-    const positions = explosionGeometry.attributes.position.array
-    
-    for (let i = 0; i < explosionCount; i++) {
-      const i3 = i * 3
-      positions[i3] += velocities[i].x
-      positions[i3 + 1] += velocities[i].y
-      positions[i3 + 2] += velocities[i].z
-      
-      velocities[i].y -= 0.5 // Gravity
-    }
-    
-    explosionGeometry.attributes.position.needsUpdate = true
-    explosionMaterial.opacity = Math.max(0, 1 - explosionTime / 1000)
-    
-    if (explosionTime < 1000) {
-      requestAnimationFrame(animateExplosion)
-    } else {
-      scene.remove(explosionParticles)
-    }
-  }
-  
-  animateExplosion()
-}
 
 const animate = () => {
   animationId = requestAnimationFrame(animate)
@@ -365,7 +345,6 @@ onUnmounted(() => {
   
   if (container.value && renderer) {
     container.value.removeEventListener('mousemove', onMouseMove)
-    container.value.removeEventListener('click', onMouseClick)
     window.removeEventListener('resize', onWindowResize)
     
     if (renderer.domElement.parentNode) {
