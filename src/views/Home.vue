@@ -24,11 +24,9 @@
       </div>
     </nav>
 
-    <!-- Hero Section with Animated Map Particles -->
+    <!-- Hero Section with 3D Particles Animation -->
     <section class="hero-section">
-      <div class="particles-container" ref="particlesContainer">
-        <!-- Particules générées dynamiquement -->
-      </div>
+      <ParticlesAnimation />
       
       <div class="hero-content">
         <div class="hero-text">
@@ -184,8 +182,8 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import ParticlesAnimation from '../components/ParticlesAnimation.vue'
 
-const particlesContainer = ref(null)
 const statNumbers = ref([])
 const aiProgress = ref(0)
 
@@ -235,68 +233,6 @@ const stats = [
   { id: 4, number: 24, label: 'Support 24/7' }
 ]
 
-// Création des particules de carte
-const createMapParticles = () => {
-  if (!particlesContainer.value) return
-
-  const container = particlesContainer.value
-  const particleCount = 150
-
-  for (let i = 0; i < particleCount; i++) {
-    const particle = document.createElement('div')
-    particle.className = 'map-particle'
-    
-    // Position aléatoire
-    particle.style.left = Math.random() * 100 + '%'
-    particle.style.top = Math.random() * 100 + '%'
-    
-    // Taille aléatoire
-    const size = Math.random() * 8 + 3
-    particle.style.width = size + 'px'
-    particle.style.height = size + 'px'
-    
-    // Animation delay aléatoire
-    particle.style.animationDelay = Math.random() * 4 + 's'
-    particle.style.animationDuration = (Math.random() * 3 + 2) + 's'
-    
-    // Forme de territoire/région
-    if (Math.random() > 0.7) {
-      particle.classList.add('territory-particle')
-    }
-    
-    // Interaction au survol
-    particle.addEventListener('mouseenter', () => {
-      particle.classList.add('dispersed')
-      
-      // Créer des mini-particules qui se dispersent
-      for (let j = 0; j < 6; j++) {
-        const miniParticle = document.createElement('div')
-        miniParticle.className = 'mini-particle'
-        
-        const angle = (j / 6) * Math.PI * 2
-        const distance = 30 + Math.random() * 20
-        
-        miniParticle.style.left = particle.offsetLeft + Math.cos(angle) * distance + 'px'
-        miniParticle.style.top = particle.offsetTop + Math.sin(angle) * distance + 'px'
-        
-        container.appendChild(miniParticle)
-        
-        // Supprimer après animation
-        setTimeout(() => {
-          miniParticle.remove()
-        }, 1000)
-      }
-    })
-    
-    particle.addEventListener('mouseleave', () => {
-      setTimeout(() => {
-        particle.classList.remove('dispersed')
-      }, 500)
-    })
-    
-    container.appendChild(particle)
-  }
-}
 
 // Animation des stats
 const animateStats = () => {
@@ -337,7 +273,6 @@ const toggleMobileMenu = () => {
 }
 
 onMounted(() => {
-  createMapParticles()
   animateAIProgress()
   
   // Observer pour animer les stats quand ils sont visibles
@@ -482,60 +417,6 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
-.particles-container {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.map-particle {
-  position: absolute;
-  background: rgba(255, 255, 255, 0.6);
-  border-radius: 50%;
-  animation: float 4s ease-in-out infinite;
-  transition: all 0.3s ease;
-  pointer-events: auto;
-  cursor: pointer;
-}
-
-.territory-particle {
-  border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
-  background: rgba(70, 229, 105, 0.4);
-}
-
-.map-particle.dispersed {
-  opacity: 0.3;
-  transform: scale(0.5);
-}
-
-.mini-particle {
-  position: absolute;
-  width: 3px;
-  height: 3px;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 50%;
-  animation: disperse 1s ease-out forwards;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-20px) rotate(180deg); }
-}
-
-@keyframes disperse {
-  0% { 
-    opacity: 1; 
-    transform: scale(1); 
-  }
-  100% { 
-    opacity: 0; 
-    transform: scale(0) translateY(-30px); 
-  }
-}
 
 .hero-content {
   position: relative;
