@@ -21,7 +21,12 @@ export default defineConfig({
     port: 5000,
     open: true,
     cors: true,
-    allowedHosts: 'all'
+    allowedHosts: [
+      'all',
+      '0f607c5d-57f0-407c-b665-983627ccf50a-00-ty5cepzmzr3i.riker.replit.dev',
+      '.replit.dev',
+      'localhost'
+    ]
   },
   build: {
     outDir: 'dist',
