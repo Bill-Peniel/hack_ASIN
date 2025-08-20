@@ -83,30 +83,32 @@
               <div class="col-md-8">
                 <h6>Informations de la propriété</h6>
                 <table class="table table-sm">
-                  <tr>
-                    <th>Titre:</th>
-                    <td>{{ selectedProperty.title }}</td>
-                  </tr>
-                  <tr>
-                    <th>Type:</th>
-                    <td>{{ selectedProperty.type }}</td>
-                  </tr>
-                  <tr>
-                    <th>Surface:</th>
-                    <td>{{ selectedProperty.area }} m²</td>
-                  </tr>
-                  <tr>
-                    <th>Localisation:</th>
-                    <td>{{ selectedProperty.location.address }}, {{ selectedProperty.location.city }}, {{ selectedProperty.location.region }}</td>
-                  </tr>
-                  <tr>
-                    <th>Coordonnées GPS:</th>
-                    <td>{{ selectedProperty.location.coordinates.lat }}, {{ selectedProperty.location.coordinates.lng }}</td>
-                  </tr>
-                  <tr>
-                    <th>Description:</th>
-                    <td>{{ selectedProperty.description }}</td>
-                  </tr>
+                  <tbody>
+                    <tr>
+                      <th>Titre:</th>
+                      <td>{{ selectedProperty.title }}</td>
+                    </tr>
+                    <tr>
+                      <th>Type:</th>
+                      <td>{{ selectedProperty.type }}</td>
+                    </tr>
+                    <tr>
+                      <th>Surface:</th>
+                      <td>{{ selectedProperty.area }} m²</td>
+                    </tr>
+                    <tr>
+                      <th>Localisation:</th>
+                      <td>{{ selectedProperty.location.address }}, {{ selectedProperty.location.city }}, {{ selectedProperty.location.region }}</td>
+                    </tr>
+                    <tr>
+                      <th>Coordonnées GPS:</th>
+                      <td>{{ selectedProperty.location.coordinates.lat }}, {{ selectedProperty.location.coordinates.lng }}</td>
+                    </tr>
+                    <tr>
+                      <th>Description:</th>
+                      <td>{{ selectedProperty.description }}</td>
+                    </tr>
+                  </tbody>
                 </table>
 
                 <!-- AI Validation Results -->
