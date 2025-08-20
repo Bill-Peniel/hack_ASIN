@@ -29,54 +29,66 @@
       <ParticlesAnimation />
       
       <div class="hero-content">
-        <div class="hero-text">
+        <div class="hero-text" data-aos="fade-right" data-aos-duration="1000">
           <h1 class="hero-title">
-            <span class="title-line">Révolutionnez</span>
-            <span class="title-line gradient-text">Votre Gestion</span>
-            <span class="title-line">Foncière</span>
+            <span class="title-line animate-slide-up" data-delay="0">Révolutionnez</span>
+            <span class="title-line gradient-text animate-slide-up" data-delay="200">Votre Gestion</span>
+            <span class="title-line animate-slide-up" data-delay="400">Foncière</span>
           </h1>
-          <p class="hero-description">
+          <p class="hero-description animate-fade-in" data-delay="600">
             Plateforme intelligente de gestion foncière en Côte d'Ivoire. 
             Validation IA, surveillance satellite, marketplace sécurisé.
           </p>
-          <div class="hero-actions">
-            <router-link to="/login" class="cta-primary">
-              <span>Commencer Maintenant</span>
-              <i class="fas fa-arrow-right"></i>
+          <div class="hero-actions animate-fade-in" data-delay="800">
+            <router-link to="/login" class="cta-primary modern-btn">
+              <span class="btn-text">Commencer Maintenant</span>
+              <i class="fas fa-arrow-right btn-icon"></i>
+              <div class="btn-ripple"></div>
             </router-link>
-            <button class="cta-secondary" @click="scrollToFeatures">
-              <i class="fas fa-play"></i>
-              Voir la démo
+            <button class="cta-secondary modern-btn" @click="scrollToFeatures">
+              <i class="fas fa-play btn-icon"></i>
+              <span class="btn-text">Voir la démo</span>
+              <div class="btn-ripple"></div>
             </button>
           </div>
         </div>
         
-        <div class="hero-visual">
-          <div class="floating-card property-card">
+        <div class="hero-visual" data-aos="fade-left" data-aos-duration="1200">
+          <div class="floating-card property-card modern-card" data-tilt>
+            <div class="card-glow"></div>
             <div class="card-header">
-              <i class="fas fa-home"></i>
+              <i class="fas fa-home pulse-icon"></i>
               <span>Propriété Validée</span>
+              <div class="status-indicator validated"></div>
             </div>
             <div class="card-body">
               <div class="property-info">
                 <h4>Villa Moderne Cocody</h4>
                 <p>500m² • 4 chambres</p>
-                <div class="price">125,000,000 FCFA</div>
+                <div class="price animate-counter">125,000,000 FCFA</div>
               </div>
             </div>
           </div>
           
-          <div class="floating-card ai-card">
+          <div class="floating-card ai-card modern-card" data-tilt>
+            <div class="card-glow ai-glow"></div>
             <div class="card-header">
-              <i class="fas fa-robot"></i>
+              <i class="fas fa-robot spin-on-hover"></i>
               <span>IA Validation</span>
+              <div class="ai-indicator active"></div>
             </div>
             <div class="validation-progress">
-              <div class="progress-bar">
-                <div class="progress-fill" :style="{ width: aiProgress + '%' }"></div>
+              <div class="progress-bar modern-progress">
+                <div class="progress-fill animated-progress" :style="{ width: aiProgress + '%' }"></div>
+                <div class="progress-shine"></div>
               </div>
               <span class="progress-text">{{ Math.round(aiProgress) }}% validé</span>
             </div>
+          </div>
+          
+          <!-- Nouvel élément décoratif -->
+          <div class="floating-elements">
+            <div class="float-element" v-for="n in 6" :key="n" :style="getFloatingElementStyle(n)"></div>
           </div>
         </div>
       </div>
@@ -97,12 +109,22 @@
         </div>
         
         <div class="features-grid">
-          <div class="feature-card" v-for="feature in features" :key="feature.id">
-            <div class="feature-icon">
+          <div 
+            class="feature-card modern-feature-card" 
+            v-for="(feature, index) in features" 
+            :key="feature.id"
+            :data-aos="'fade-up'"
+            :data-aos-delay="index * 100"
+            :data-aos-duration="800"
+          >
+            <div class="feature-icon modern-icon">
+              <div class="icon-bg"></div>
               <i :class="feature.icon"></i>
+              <div class="icon-shine"></div>
             </div>
             <h3 class="feature-title">{{ feature.title }}</h3>
             <p class="feature-description">{{ feature.description }}</p>
+            <div class="feature-hover-overlay"></div>
           </div>
         </div>
       </div>
@@ -112,9 +134,19 @@
     <section class="stats-section">
       <div class="container">
         <div class="stats-grid">
-          <div class="stat-item" v-for="stat in stats" :key="stat.id">
+          <div 
+            class="stat-item modern-stat-item" 
+            v-for="(stat, index) in stats" 
+            :key="stat.id"
+            :data-aos="'zoom-in'"
+            :data-aos-delay="index * 150"
+          >
+            <div class="stat-icon">
+              <i :class="getStatIcon(stat.id)"></i>
+            </div>
             <div class="stat-number" ref="statNumbers" :data-target="stat.number">0</div>
             <div class="stat-label">{{ stat.label }}</div>
+            <div class="stat-bg-effect"></div>
           </div>
         </div>
       </div>
@@ -181,11 +213,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import ParticlesAnimation from '../components/ParticlesAnimation.vue'
 
 const statNumbers = ref([])
 const aiProgress = ref(0)
+const isAnimating = ref(false)
 
 const features = [
   {
@@ -272,8 +305,78 @@ const toggleMobileMenu = () => {
   // Implémentation du menu mobile
 }
 
+// Nouvelles fonctions d'animation
+const getFloatingElementStyle = (index) => {
+  const positions = [
+    { top: '20%', right: '15%', delay: '0s' },
+    { top: '45%', right: '8%', delay: '1s' },
+    { top: '70%', right: '20%', delay: '0.5s' },
+    { top: '25%', right: '25%', delay: '1.5s' },
+    { top: '55%', right: '2%', delay: '0.8s' },
+    { top: '80%', right: '12%', delay: '2s' }
+  ]
+  return {
+    top: positions[index - 1].top,
+    right: positions[index - 1].right,
+    animationDelay: positions[index - 1].delay
+  }
+}
+
+const getStatIcon = (id) => {
+  const icons = {
+    1: 'fas fa-building',
+    2: 'fas fa-users',
+    3: 'fas fa-check-circle',
+    4: 'fas fa-headset'
+  }
+  return icons[id] || 'fas fa-chart-line'
+}
+
+const initAnimations = () => {
+  // Animation des éléments au scroll
+  const animateOnScroll = () => {
+    const elements = document.querySelectorAll('.animate-slide-up, .animate-fade-in')
+    elements.forEach(element => {
+      const delay = parseInt(element.dataset.delay) || 0
+      setTimeout(() => {
+        element.classList.add('active')
+      }, delay)
+    })
+  }
+  
+  // Effet tilt sur les cartes
+  const initTilt = () => {
+    const tiltElements = document.querySelectorAll('[data-tilt]')
+    tiltElements.forEach(element => {
+      element.addEventListener('mousemove', (e) => {
+        const rect = element.getBoundingClientRect()
+        const x = e.clientX - rect.left
+        const y = e.clientY - rect.top
+        
+        const centerX = rect.width / 2
+        const centerY = rect.height / 2
+        
+        const rotateX = (y - centerY) / 10
+        const rotateY = (centerX - x) / 10
+        
+        element.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.05, 1.05, 1.05)`
+      })
+      
+      element.addEventListener('mouseleave', () => {
+        element.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)'
+      })
+    })
+  }
+  
+  nextTick(() => {
+    animateOnScroll()
+    initTilt()
+  })
+}
+
 onMounted(() => {
   animateAIProgress()
+  initAnimations()
   
   // Observer pour animer les stats quand ils sont visibles
   const statsObserver = new IntersectionObserver((entries) => {
@@ -705,16 +808,91 @@ onUnmounted(() => {
   text-align: center;
 }
 
+/* Statistiques modernes */
+.modern-stat-item {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 30px 20px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.4s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.modern-stat-item:hover {
+  transform: translateY(-8px) scale(1.05);
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+}
+
+.stat-icon {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #46e569, #32b363);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  transition: all 0.3s ease;
+}
+
+.modern-stat-item:hover .stat-icon {
+  transform: scale(1.1) rotateY(360deg);
+  background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+.stat-icon i {
+  font-size: 24px;
+  color: white;
+}
+
 .stat-number {
-  font-size: 3rem;
+  font-size: 3.5rem;
   font-weight: 800;
   color: #46e569;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
+  text-shadow: 0 2px 10px rgba(70, 229, 105, 0.3);
+  transition: all 0.3s ease;
+}
+
+.modern-stat-item:hover .stat-number {
+  color: white;
+  text-shadow: 0 2px 15px rgba(255, 255, 255, 0.5);
 }
 
 .stat-label {
   font-size: 1.125rem;
   color: #cbd5e0;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.modern-stat-item:hover .stat-label {
+  color: white;
+}
+
+.stat-bg-effect {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(70, 229, 105, 0.1) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.modern-stat-item:hover .stat-bg-effect {
+  opacity: 1;
+  animation: rotateGlow 4s linear infinite;
+}
+
+@keyframes rotateGlow {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 /* CTA Section */
@@ -818,6 +996,106 @@ onUnmounted(() => {
   padding-top: 20px;
   text-align: center;
   color: #718096;
+}
+
+/* Nouvelles animations modernes */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Couleurs d'accent animées */
+@keyframes colorShift {
+  0%, 100% { color: #46e569; }
+  25% { color: #667eea; }
+  50% { color: #f093fb; }
+  75% { color: #764ba2; }
+}
+
+.gradient-text {
+  background: linear-gradient(45deg, #46e569, #667eea, #f093fb, #764ba2);
+  background-size: 400% 400%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradientShift 3s ease-in-out infinite;
+}
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* Effets de survol avancés pour la navigation */
+.nav-link {
+  position: relative;
+  transition: color 0.3s ease;
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: #46e569;
+  transition: width 0.3s ease;
+}
+
+.nav-link:hover::after {
+  width: 100%;
+}
+
+/* Animations de scroll */
+.animate-on-scroll {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.animate-on-scroll.animated {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /* Responsive */
