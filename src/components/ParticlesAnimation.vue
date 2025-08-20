@@ -15,6 +15,40 @@ const mouse = { x: 0, y: 0 }
 const originalPositions = []
 let mouseWorldPos = new THREE.Vector3()
 
+// Coordonnées simplifiées de la carte du Bénin
+const beninMapPoints = [
+  // Frontière ouest (avec le Togo)
+  { x: -1, y: 1 }, { x: -1, y: 0.8 }, { x: -0.9, y: 0.6 }, { x: -0.8, y: 0.4 },
+  { x: -0.7, y: 0.2 }, { x: -0.6, y: 0 }, { x: -0.5, y: -0.2 }, { x: -0.4, y: -0.4 },
+  { x: -0.3, y: -0.6 }, { x: -0.2, y: -0.8 }, { x: -0.1, y: -1 },
+  
+  // Côte atlantique (sud)
+  { x: -0.1, y: -1 }, { x: 0.1, y: -1 }, { x: 0.3, y: -0.95 }, { x: 0.5, y: -0.9 },
+  { x: 0.7, y: -0.85 }, { x: 0.9, y: -0.8 },
+  
+  // Frontière est (avec le Nigeria)
+  { x: 0.9, y: -0.8 }, { x: 1, y: -0.6 }, { x: 1.1, y: -0.4 }, { x: 1.2, y: -0.2 },
+  { x: 1.1, y: 0 }, { x: 1, y: 0.2 }, { x: 0.9, y: 0.4 }, { x: 0.8, y: 0.6 },
+  
+  // Frontière nord (avec le Niger et le Burkina Faso)
+  { x: 0.8, y: 0.8 }, { x: 0.6, y: 1 }, { x: 0.4, y: 1.1 }, { x: 0.2, y: 1.2 },
+  { x: 0, y: 1.1 }, { x: -0.2, y: 1.05 }, { x: -0.4, y: 1.02 }, { x: -0.6, y: 1.01 },
+  { x: -0.8, y: 1.005 }, { x: -1, y: 1 },
+  
+  // Points intérieurs pour density
+  { x: -0.5, y: 0.5 }, { x: -0.3, y: 0.3 }, { x: -0.1, y: 0.1 }, { x: 0.1, y: -0.1 },
+  { x: 0.3, y: -0.3 }, { x: 0.5, y: -0.5 }, { x: 0.7, y: -0.1 }, { x: 0.5, y: 0.3 },
+  { x: 0.3, y: 0.5 }, { x: 0.1, y: 0.7 }, { x: -0.1, y: 0.8 }, { x: -0.3, y: 0.6 },
+  { x: -0.5, y: 0.8 }, { x: -0.7, y: 0.9 }, { x: 0.6, y: 0.1 }, { x: 0.8, y: 0.3 },
+  
+  // Villes principales
+  { x: 0.2, y: -0.7 }, // Porto-Novo (capitale)
+  { x: 0.1, y: -0.6 }, // Cotonou (économique)
+  { x: -0.2, y: 0.8 }, // Parakou (centre)
+  { x: 0.5, y: 0.9 }, // Natitingou (nord-ouest)
+  { x: 0.8, y: 0.7 }, // Kandi (nord-est)
+]
+
 const initThreeJS = () => {
   if (!container.value) return
 
@@ -56,50 +90,72 @@ const initThreeJS = () => {
 }
 
 const createParticles = () => {
-  const particleCount = 1000 // Optimized count
-  const positions = new Float32Array(particleCount * 3)
-  const colors = new Float32Array(particleCount * 3)
+  const particlesPerPoint = 15 // Particules par point de la carte
+  const totalParticles = beninMapPoints.length * particlesPerPoint
+  const positions = new Float32Array(totalParticles * 3)
+  const colors = new Float32Array(totalParticles * 3)
+  const sizes = new Float32Array(totalParticles)
 
-  for (let i = 0; i < particleCount; i++) {
-    const i3 = i * 3
+  let particleIndex = 0
 
-    // Position - spread particles in a more flat distribution
-    positions[i3] = (Math.random() - 0.5) * 800      // x
-    positions[i3 + 1] = (Math.random() - 0.5) * 600  // y
-    positions[i3 + 2] = (Math.random() - 0.5) * 100  // z (shallow)
+  // Créer des particules autour de chaque point de la carte du Bénin
+  beninMapPoints.forEach((mapPoint, pointIndex) => {
+    for (let i = 0; i < particlesPerPoint; i++) {
+      const i3 = particleIndex * 3
+      
+      // Position basée sur les coordonnées de la carte avec variation aléatoire
+      const scale = 200 // Taille de la carte
+      const scatter = 25 // Dispersion autour des points
+      
+      positions[i3] = mapPoint.x * scale + (Math.random() - 0.5) * scatter
+      positions[i3 + 1] = mapPoint.y * scale + (Math.random() - 0.5) * scatter
+      positions[i3 + 2] = (Math.random() - 0.5) * 20 // Profondeur légère
 
-    // Store original positions
-    originalPositions.push({
-      x: positions[i3],
-      y: positions[i3 + 1],
-      z: positions[i3 + 2]
-    })
+      // Store original positions
+      originalPositions.push({
+        x: positions[i3],
+        y: positions[i3 + 1],
+        z: positions[i3 + 2]
+      })
 
-    // Colors - green to cyan gradient
-    const hue = 0.3 + Math.random() * 0.2 // Green to cyan
-    const color = new THREE.Color().setHSL(hue, 0.8, 0.6)
-    colors[i3] = color.r
-    colors[i3 + 1] = color.g
-    colors[i3 + 2] = color.b
-  }
+      // Couleurs - dégradé selon la position (nord-sud)
+      const normalizedY = (mapPoint.y + 1.2) / 2.4 // Normaliser entre 0 et 1
+      const hue = 0.25 + normalizedY * 0.25 // Du vert au cyan du sud au nord
+      const saturation = 0.7 + Math.random() * 0.3
+      const lightness = 0.5 + Math.random() * 0.3
+      
+      const color = new THREE.Color().setHSL(hue, saturation, lightness)
+      colors[i3] = color.r
+      colors[i3 + 1] = color.g
+      colors[i3 + 2] = color.b
+      
+      // Tailles variées - plus grandes pour les frontières
+      const isBoader = pointIndex < 20 || pointIndex >= beninMapPoints.length - 8
+      sizes[particleIndex] = isBoader ? 6 + Math.random() * 4 : 3 + Math.random() * 3
+      
+      particleIndex++
+    }
+  })
 
   particleGeometry = new THREE.BufferGeometry()
   particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
   particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))
+  particleGeometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1))
 
-  // Simple point material
+  // Matériau avec tailles variables
   particleMaterial = new THREE.PointsMaterial({
-    size: 4,
+    size: 5,
     vertexColors: true,
     transparent: true,
-    opacity: 0.8,
-    blending: THREE.AdditiveBlending
+    opacity: 0.9,
+    blending: THREE.AdditiveBlending,
+    sizeAttenuation: true
   })
 
   particleSystem = new THREE.Points(particleGeometry, particleMaterial)
   scene.add(particleSystem)
 
-  console.log('Particles created:', particleCount)
+  console.log('Particules créées pour la carte du Bénin:', totalParticles)
 }
 
 const onMouseMove = (event) => {
@@ -172,8 +228,9 @@ const animate = () => {
   animationId = requestAnimationFrame(animate)
   
   if (particleSystem) {
-    // Gentle rotation
-    particleSystem.rotation.y += 0.001
+    // Rotation très subtile pour garder la forme reconnaissable
+    particleSystem.rotation.y += 0.0005
+    particleSystem.rotation.z = Math.sin(Date.now() * 0.0001) * 0.05 // Balancement léger
   }
   
   if (renderer && scene && camera) {
